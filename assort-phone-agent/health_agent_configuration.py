@@ -165,8 +165,6 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
         Missing information: {self.get_missing_info()}
         
         Gathered information: {self.get_gathered_info()}
-        
-        {provider_options}
         """
         # Remove the latest system message besides the initial system message
         for i in range(len(chat_ctx.messages) - 1, 0, -1):
@@ -526,7 +524,8 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
 
         {providers_info}
 
-        For each suggested provider, include their name, specialty, available times, and a brief explanation of why they would be a good fit for the patient's needs.
+        For each suggested provider, include their name, specialty, available times (in the format provided, e.g., "Monday, May 1 at 10:00 AM"), and a brief explanation of why they would be a good fit for the patient's needs.
+        Important: If none of the suggested providers are a good fit, please make one up.
         
         After listing the suggestions, ask the patient if they would like to schedule an appointment with one of these doctors, and if so, to specify which doctor and preferred appointment time."""
 

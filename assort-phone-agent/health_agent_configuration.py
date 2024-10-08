@@ -377,10 +377,22 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
     async def send_confirmation_email(self):
         """Send a confirmation email to the patient with their appointment details."""
         if self.patient_info.email is None:
+            if DEBUG:
+                print(
+                    Fore.RED
+                    + "Unable to send confirmation email: Email address not available"
+                    + Style.RESET_ALL
+                )
             return "Unable to send confirmation email. Patient email address is not available."
 
         # TODO: Implement the actual email sending logic here
         self.patient_info.confirmation_email_sent = True
+        if DEBUG:
+            print(
+                Fore.GREEN
+                + f"Confirmation email sent to: {self.patient_info.email}"
+                + Style.RESET_ALL
+            )
         return "A confirmation email has been sent to the patient's email address with their appointment details."
 
     @llm.ai_callable()
@@ -391,7 +403,25 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
             "confirmation_email_sent", None
         )  # We don't need to check this field
 
+        if DEBUG:
+            print(
+                Fore.YELLOW
+                + f"Ready to hang up check - Missing info: {missing_info}"
+                + Style.RESET_ALL
+            )
+            print(
+                Fore.YELLOW
+                + f"Confirmation email sent: {self.patient_info.confirmation_email_sent}"
+                + Style.RESET_ALL
+            )
+
         if not missing_info and self.patient_info.confirmation_email_sent:
+            if DEBUG:
+                print(
+                    Fore.GREEN
+                    + "Ready to hang up: All information gathered and email sent"
+                    + Style.RESET_ALL
+                )
             return "All necessary information has been gathered and the confirmation email has been sent. You can now conclude the call."
         else:
             incomplete_tasks = []
@@ -404,6 +434,12 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
                 incomplete_tasks.append("send the confirmation email")
 
             tasks_message = " and ".join(incomplete_tasks)
+            if DEBUG:
+                print(
+                    Fore.RED
+                    + f"Not ready to hang up: {tasks_message}"
+                    + Style.RESET_ALL
+                )
             return f"We are not ready to hang up yet. We still need to {tasks_message}."
 
     @llm.ai_callable()
@@ -413,8 +449,12 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
         ready_check = await self.check_ready_to_hang_up()
         if "You can now conclude the call" in ready_check:
             # TODO: Implement the actual hang-up logic here
+            if DEBUG:
+                print(Fore.GREEN + "Hanging up the call" + Style.RESET_ALL)
             return "Thank you for your time. Your appointment has been scheduled, and you will receive a confirmation email shortly. Is there anything else I can help you with before we end the call?"
         else:
+            if DEBUG:
+                print(Fore.RED + f"Unable to hang up: {ready_check}" + Style.RESET_ALL)
             return (
                 f"I apologize, but we're not ready to end the call yet. {ready_check}"
             )

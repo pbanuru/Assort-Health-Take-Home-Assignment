@@ -36,6 +36,8 @@ class PatientInfo:
     upcoming_appointment_provider: Optional[str] = None
     upcoming_appointment_time: Optional[datetime] = None
 
+    confirmation_email_sent: Optional[bool] = False
+
 
 @dataclass
 class AvailableProviders:
@@ -353,6 +355,8 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
     async def check_all_info_gathered(self):
         """Check if all necessary patient information has been gathered."""
         missing_info = self.get_missing_info()
+        missing_info.pop("confirmation_email_sent", None)
+
         if not missing_info:
             return "All necessary information has been gathered. We can proceed with scheduling the appointment."
         else:
@@ -368,7 +372,7 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
             return "Unable to send confirmation email. Patient email address is not available."
 
         # TODO: Implement the actual email sending logic here
-
+        self.patient_info.confirmation_email_sent = True
         return "A confirmation email has been sent to the patient's email address with their appointment details."
 
 

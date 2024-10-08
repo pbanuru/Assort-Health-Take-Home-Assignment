@@ -113,7 +113,7 @@ You are an AI medical appointment scheduler for Assort Health. Your task is to c
    - Insurance information - payer name and ID
    - Referral status and referring physician (if applicable)
    - Reason for the visit (Chief medical complaint)
-   - Address
+   - Address (collect street address, city, state, and ZIP code separately)
    - Contact information - phone number and email
 
 3. Based on the patient's chief complaint, suggest appropriate available providers and appointment times.
@@ -305,13 +305,25 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
     @llm.ai_callable()
     async def set_address(
         self,
-        address: Annotated[str, llm.TypeInfo(description="The patient's full address")],
+        street_address: Annotated[
+            str, llm.TypeInfo(description="The street address of the patient")
+        ],
+        city: Annotated[
+            str, llm.TypeInfo(description="The city of the patient's address")
+        ],
+        state: Annotated[
+            str, llm.TypeInfo(description="The state of the patient's address")
+        ],
+        zip_code: Annotated[
+            str, llm.TypeInfo(description="The ZIP code of the patient's address")
+        ],
     ):
         """Called when the user provides their address."""
-        self.patient_info.address = address
+        full_address = f"{street_address}, {city}, {state} {zip_code}"
+        self.patient_info.address = full_address
         if DEBUG:
-            print(Fore.RED + f"Address: {address}" + Style.RESET_ALL)
-        return f"I've recorded your address as: {address}. Is that correct?"
+            print(Fore.RED + f"Address: {full_address}" + Style.RESET_ALL)
+        return f"I've recorded your address as: {full_address}. Is that correct?"
 
 
 if __name__ == "__main__":

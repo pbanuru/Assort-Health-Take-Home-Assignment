@@ -12,6 +12,8 @@ from livekit.agents import (
 from livekit.agents.pipeline import VoicePipelineAgent
 from livekit.plugins import openai, deepgram, silero
 
+from health_agent_configuration import SchedulerAgent
+
 
 load_dotenv(dotenv_path=".env.local")
 logger = logging.getLogger("voice-agent")
@@ -25,8 +27,7 @@ async def entrypoint(ctx: JobContext):
     initial_ctx = llm.ChatContext().append(
         role="system",
         text=(
-            "You are an AI medical assistant created by Assort Health. Your primary role is to collect patient information and schedule appointments over the phone. "
-            "Communicate clearly and concisely, using a friendly and professional tone. Avoid using complex medical terminology or unpronounced punctuation. "
+            SchedulerAgent().get_system_prompt()
         ),
     )
 

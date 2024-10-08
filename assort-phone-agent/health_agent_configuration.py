@@ -114,7 +114,7 @@ You are an AI medical appointment scheduler for Assort Health. Your task is to c
    - Date of birth
    - Insurance information - payer name and ID
    - Referral status and referring physician (if applicable)
-   - Reason for the visit (Chief medical complaint)
+   - Reason for the visit (Chief medical complaint) (don't refer to it as the chief complaint cause patient may not know what that is)
    - Address (collect street address, city, state, and ZIP code separately)
    - Contact information - phone number and email
 
@@ -125,7 +125,7 @@ You are an AI medical appointment scheduler for Assort Health. Your task is to c
 
 Important notes:
 - If any information was not clearly heard, apologize and ask the patient to spell it out. 
-- Repeat the information back to the patient both during and after collection.
+- Repeat the information back to the patient both during (if not clear) and after collection.
 - Ensure all required information is collected before concluding the call.
 - Be patient, professional, and empathetic throughout the conversation.
 - If the patient is unsure about any information, offer to skip it temporarily and return to it later.
@@ -312,15 +312,27 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
         ],
         city: Annotated[
             str, llm.TypeInfo(description="The city of the patient's address")
-        ],
+        ] = None,
         state: Annotated[
             str, llm.TypeInfo(description="The state of the patient's address")
-        ],
+        ] = None,
         zip_code: Annotated[
             str, llm.TypeInfo(description="The ZIP code of the patient's address")
-        ],
+        ] = None,
     ):
         """Called when the user provides their address."""
+        missing_info = []
+        if not city:
+            missing_info.append("city")
+        if not state:
+            missing_info.append("state")
+        if not zip_code:
+            missing_info.append("ZIP code")
+
+        if missing_info:
+            missing_fields = ", ".join(missing_info)
+            return f"I've recorded your street address as {street_address}. Could you please provide the {missing_fields} for your address?"
+
         full_address = f"{street_address}, {city}, {state} {zip_code}"
         self.patient_info.address = full_address
         if DEBUG:

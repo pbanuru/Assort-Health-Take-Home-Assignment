@@ -227,6 +227,33 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
         except ValueError:
             return "I'm sorry, that doesn't seem to be a valid date format. Please provide your date of birth in YYYY-MM-DD format."
 
+    @llm.ai_callable()
+    async def set_insurance_payer(
+        self,
+        insurance_payer: Annotated[
+            str,
+            llm.TypeInfo(description="The name of the patient's insurance provider"),
+        ],
+    ):
+        """Called when the user provides their insurance payer information."""
+        self.patient_info.insurance_payer = insurance_payer
+        if DEBUG:
+            print(Fore.RED + f"Insurance payer: {insurance_payer}" + Style.RESET_ALL)
+        return f"I've recorded your insurance provider as {insurance_payer}. Is that correct?"
+
+    @llm.ai_callable()
+    async def set_insurance_id(
+        self,
+        insurance_id: Annotated[
+            str, llm.TypeInfo(description="The patient's insurance ID number")
+        ],
+    ):
+        """Called when the user provides their insurance ID."""
+        self.patient_info.insurance_id = insurance_id
+        if DEBUG:
+            print(Fore.RED + f"Insurance ID: {insurance_id}" + Style.RESET_ALL)
+        return f"I've recorded your insurance ID as {insurance_id}. Is that correct?"
+
 
 if __name__ == "__main__":
     agent = SchedulerAgent()

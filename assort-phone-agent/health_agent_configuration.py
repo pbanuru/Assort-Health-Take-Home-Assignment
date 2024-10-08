@@ -200,7 +200,7 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
         self.patient_info.first_name = first_name
         if DEBUG:
             print(Fore.RED + f"First name: {first_name}" + Style.RESET_ALL)
-        return f"Patient's first name set to {first_name}"
+        return f"Patient's first name set to {first_name}. Please continue the conversation."
 
     @llm.ai_callable()
     async def set_last_name(
@@ -213,7 +213,9 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
         self.patient_info.last_name = last_name
         if DEBUG:
             print(Fore.RED + f"Last name: {last_name}" + Style.RESET_ALL)
-        return f"Patient's last name set to {last_name}"
+        return (
+            f"Patient's last name set to {last_name}. Please continue the conversation."
+        )
 
     @llm.ai_callable()
     async def set_date_of_birth(
@@ -229,9 +231,9 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
             )
             if DEBUG:
                 print(Fore.RED + f"Date of birth: {date_of_birth}" + Style.RESET_ALL)
-            return f"Patient's date of birth set to {date_of_birth}"
+            return f"Patient's date of birth set to {date_of_birth}. Please continue the conversation."
         except ValueError:
-            return "Invalid date format provided for date of birth"
+            return "Invalid date format provided for date of birth. Please try again and continue the conversation."
 
     @llm.ai_callable()
     async def set_insurance_payer(
@@ -245,7 +247,7 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
         self.patient_info.insurance_payer = insurance_payer
         if DEBUG:
             print(Fore.RED + f"Insurance payer: {insurance_payer}" + Style.RESET_ALL)
-        return f"Patient's insurance provider set to {insurance_payer}"
+        return f"Patient's insurance provider set to {insurance_payer}. Please continue the conversation."
 
     @llm.ai_callable()
     async def set_insurance_id(
@@ -258,7 +260,7 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
         self.patient_info.insurance_id = insurance_id
         if DEBUG:
             print(Fore.RED + f"Insurance ID: {insurance_id}" + Style.RESET_ALL)
-        return f"Patient's insurance ID set to {insurance_id}"
+        return f"Patient's insurance ID set to {insurance_id}. Please continue the conversation."
 
     @llm.ai_callable()
     async def set_referral_status(
@@ -271,7 +273,7 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
         self.patient_info.has_referral = has_referral
         if DEBUG:
             print(Fore.RED + f"Has referral: {has_referral}" + Style.RESET_ALL)
-        return f"Patient's referral status set to: {'has referral' if has_referral else 'no referral'}"
+        return f"Patient's referral status set to: {'has referral' if has_referral else 'no referral'}. Please continue the conversation."
 
     @llm.ai_callable()
     async def set_referred_physician(
@@ -289,7 +291,7 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
             print(
                 Fore.RED + f"Referred physician: {referred_physician}" + Style.RESET_ALL
             )
-        return f"Referring physician set to Dr. {referred_physician}"
+        return f"Referring physician set to Dr. {referred_physician}. Please continue the conversation."
 
     @llm.ai_callable()
     async def set_chief_complaint(
@@ -305,7 +307,7 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
         self.patient_info.chief_complaint = chief_complaint
         if DEBUG:
             print(Fore.RED + f"Chief complaint: {chief_complaint}" + Style.RESET_ALL)
-        return f"Patient's main reason for visit set to: {chief_complaint}"
+        return f"Patient's main reason for visit set to: {chief_complaint}. Please continue the conversation."
 
     @llm.ai_callable()
     async def set_address(
@@ -334,13 +336,13 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
 
         if missing_info:
             missing_fields = ", ".join(missing_info)
-            return f"Street address set to {street_address}. Missing address information: {missing_fields}"
+            return f"Street address set to {street_address}. Missing address information: {missing_fields}. Please continue the conversation."
 
         full_address = f"{street_address}, {city}, {state} {zip_code}"
         self.patient_info.address = full_address
         if DEBUG:
             print(Fore.RED + f"Address: {full_address}" + Style.RESET_ALL)
-        return f"Patient's full address set to: {full_address}"
+        return f"Patient's full address set to: {full_address}. Please continue the conversation."
 
     @llm.ai_callable()
     async def set_phone_number(
@@ -353,7 +355,7 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
         self.patient_info.phone_number = phone_number
         if DEBUG:
             print(Fore.RED + f"Phone number: {phone_number}" + Style.RESET_ALL)
-        return f"Patient's phone number set to: {phone_number}"
+        return f"Patient's phone number set to: {phone_number}. Please continue the conversation."
 
     @llm.ai_callable()
     async def set_email(
@@ -366,7 +368,7 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
         self.patient_info.email = email
         if DEBUG:
             print(Fore.RED + f"Email: {email}" + Style.RESET_ALL)
-        return f"Patient's email address set to: {email}. Confirmation email will be sent to this address."
+        return f"Patient's email address set to: {email}. Confirmation email will be sent to this address. Please continue the conversation."
 
     @llm.ai_callable()
     async def check_all_info_gathered(self):
@@ -387,10 +389,10 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
             )
 
         if not missing_info:
-            return "All necessary information gathered. Ready to proceed with appointment scheduling."
+            return "All necessary information gathered. Ready to proceed with appointment scheduling. Please continue the conversation."
         else:
             missing_fields = ", ".join(missing_info.keys())
-            return f"Information still needed: {missing_fields}"
+            return f"Information still needed: {missing_fields}. Please continue the conversation."
 
     @llm.ai_callable()
     async def confirmation_completed_signal(self):
@@ -403,13 +405,15 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
                     + "Information confirmed with the patient."
                     + Style.RESET_ALL
                 )
-            return "Information has been confirmed with the patient."
+            return "Information has been confirmed with the patient. Please continue the conversation."
         else:
             if DEBUG:
                 print(
                     Fore.YELLOW + "Information was already confirmed." + Style.RESET_ALL
                 )
-            return "Information was already confirmed."
+            return (
+                "Information was already confirmed. Please continue the conversation."
+            )
 
     @llm.ai_callable()
     async def send_confirmation_email(self):
@@ -421,7 +425,7 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
                     + "No email address provided. Skipping confirmation email."
                     + Style.RESET_ALL
                 )
-            return "No email address provided. Confirmation email not sent."
+            return "No email address provided. Confirmation email not sent. Please continue the conversation."
 
         if not self.patient_info.information_confirmed:
             if DEBUG:
@@ -430,7 +434,7 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
                     + "Information not confirmed. Skipping confirmation email."
                     + Style.RESET_ALL
                 )
-            return "Information not confirmed. Confirmation email not sent."
+            return "Information not confirmed. Confirmation email not sent. Please continue the conversation."
 
         # TODO: Implement the actual email sending logic here
         self.patient_info.confirmation_email_sent = True
@@ -440,7 +444,7 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
                 + f"Confirmation email sent to: {self.patient_info.email}"
                 + Style.RESET_ALL
             )
-        return f"Confirmation email sent to {self.patient_info.email}"
+        return f"Confirmation email sent to {self.patient_info.email}. Please continue the conversation."
 
     @llm.ai_callable()
     async def hang_up(self):
@@ -485,7 +489,7 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
                 await self.delete_room()
                 return "All necessary information gathered and confirmed. No email provided. Call concluded and room deleted."
             elif not self.patient_info.confirmation_email_sent:
-                return "All necessary information gathered and confirmed. Confirmation email needs to be sent before concluding the call."
+                return "All necessary information gathered and confirmed. Confirmation email needs to be sent before concluding the call. Please continue the conversation."
             else:
                 if DEBUG:
                     print(
@@ -497,9 +501,9 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
                 return "All necessary information gathered, confirmed, and confirmation email sent. Call concluded and room deleted."
         else:
             if not self.patient_info.information_confirmed:
-                return "Unable to conclude call. Information has not been confirmed with the patient."
+                return "Unable to conclude call. Information has not been confirmed with the patient. Please continue the conversation."
             missing_fields = ", ".join(missing_info.keys())
-            return f"Unable to conclude call. Missing information: {missing_fields}"
+            return f"Unable to conclude call. Missing information: {missing_fields}. Please continue the conversation."
 
     async def delete_room(self):
         """Delete the LiveKit room after the call is concluded."""
@@ -543,15 +547,15 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
                     + f"Appointment set with {provider} at {appointment_time}"
                     + Style.RESET_ALL
                 )
-            return f"Appointment scheduled with {provider} on {appointment_time}"
+            return f"Appointment scheduled with {provider} on {appointment_time}. Please continue the conversation and confirm the appointment details with the patient."
         except ValueError:
-            return "Invalid date and time format provided for appointment"
+            return "Invalid date and time format provided for appointment. Please try again and continue the conversation."
 
     @llm.ai_callable()
     async def suggest_providers(self):
         """Suggest appropriate providers based on the patient's chief complaint."""
         if self.patient_info.chief_complaint is None:
-            return "Chief complaint not provided. Unable to suggest providers."
+            return "Chief complaint not provided. Unable to suggest providers. Please ask the patient for their chief complaint and continue the conversation."
 
         providers_info = []
         for provider, times, info in self.available_providers.available_providers:
@@ -577,7 +581,7 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
         """
 
         response += """
-        Please suggest up to three appropriate providers based on the chief complaint. For each suggested provider, include their name, specialty, available times, and a brief explanation of why they would be a good fit for the patient's needs. If no providers are a good fit, suggest creating a new provider."""
+        Please suggest up to three appropriate providers based on the chief complaint. For each suggested provider, include their name, specialty, available times, and a brief explanation of why they would be a good fit for the patient's needs. If no providers are a good fit, suggest creating a new provider. After suggesting providers, please continue the conversation with the patient to help them choose a provider and appointment time."""
 
         return response
 

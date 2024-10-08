@@ -349,45 +349,22 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
             print(Fore.RED + f"Email: {email}" + Style.RESET_ALL)
         return f"I've recorded your email address as: {email}. Is that correct?"
 
+    @llm.ai_callable()
+    async def check_all_info_gathered(self):
+        """Check if all necessary patient information has been gathered."""
+        missing_info = self.get_missing_info()
+        if not missing_info:
+            return "All necessary information has been gathered. We can proceed with scheduling the appointment."
+        else:
+            missing_fields = ", ".join(missing_info.keys())
+            return (
+                f"We still need to collect the following information: {missing_fields}"
+            )
+
 
 if __name__ == "__main__":
     agent = SchedulerAgent()
     print(agent.get_missing_info())
-# Example chatcontext:
-# ctx = llm.ChatContext(messages=[
-#     ChatMessage(
-#         role='system',
-#         content='You are a medical appointment scheduler for Assort Health.',
-#         id=None, name=None, tool_calls=None, tool_call_id=None, tool_exception=None
-#     ),
-#     ChatMessage(
-#         role='assistant',
-#         content='Hey, how can I help you today?',
-#         id=None, name=None, tool_calls=None, tool_call_id=None, tool_exception=None
-#     ),
-#     ChatMessage(
-#         role='user',
-#         content='Hi. Who are you?',
-#         id=None, name=None, tool_calls=None, tool_call_id=None, tool_exception=None
-#     ),
-#     ChatMessage(
-#         role='assistant',
-#         content="Hello! I'm a medical appointment scheduler for Assort Health. How can I assist you today?",
-#         id=None, name=None, tool_calls=None, tool_call_id=None, tool_exception=None
-#     ),
-#     ChatMessage(
-#         role='user',
-#         content='Wow. So cool. What do you wanna talk about?',
-#         id=None, name=None, tool_calls=None, tool_call_id=None, tool_exception=None
-#     ),
-#     ChatMessage(
-#         role='assistant',
-#         content="Thank you! I'm here to help with anything related to scheduling medical appointments, answering questions about our services, or assisting with any other healthcare-related needs you might have. Let me know how I can assist you!",
-#         id=None, name=None, tool_calls=None, tool_call_id=None, tool_exception=None
-#     ),
-#     ChatMessage(
-#         role='user',
-#         content="That's really amazing.",
-#         id=None, name=None, tool_calls=None, tool_call_id=None, tool_exception=None
-#     )
-# ])
+    # You can test the new function here if needed
+    # import asyncio
+    # print(asyncio.run(agent.check_all_info_gathered()))

@@ -53,3 +53,6 @@ and
 ## Running the Application
 
 To start the Assort Phone Agent, run:
+```
+python agent.py dev
+```

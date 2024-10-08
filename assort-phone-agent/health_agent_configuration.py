@@ -518,8 +518,17 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
         response = f"""Chief complaint: "{self.patient_info.chief_complaint}"
         Available providers:
 
-        {providers_info}
+        """
+        for provider in providers_info:
+            response += f"""
+        Name: {provider['name']}
+        Specialty: {provider['specialty']}
+        Background: {provider['background']}
+        Available times: {', '.join(provider['available_times'])}
 
+        """
+
+        response += """
         Please suggest up to three appropriate providers based on the chief complaint. For each suggested provider, include their name, specialty, available times, and a brief explanation of why they would be a good fit for the patient's needs. If no providers are a good fit, suggest creating a new provider."""
 
         return response

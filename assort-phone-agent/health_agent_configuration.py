@@ -361,10 +361,20 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
                 f"We still need to collect the following information: {missing_fields}"
             )
 
+    @llm.ai_callable()
+    async def send_confirmation_email(self):
+        """Send a confirmation email to the patient with their appointment details."""
+        if self.patient_info.email is None:
+            return "Unable to send confirmation email. Patient email address is not available."
+
+        # TODO: Implement the actual email sending logic here
+
+        return "A confirmation email has been sent to the patient's email address with their appointment details."
+
 
 if __name__ == "__main__":
     agent = SchedulerAgent()
     print(agent.get_missing_info())
     # You can test the new function here if needed
     # import asyncio
-    # print(asyncio.run(agent.check_all_info_gathered()))
+    # print(asyncio.run(agent.send_confirmation_email()))

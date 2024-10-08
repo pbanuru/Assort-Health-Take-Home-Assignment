@@ -24,10 +24,12 @@ def prewarm(proc: JobProcess):
 
 
 async def entrypoint(ctx: JobContext):
+    scheduler_agent = SchedulerAgent()
+    
     initial_ctx = llm.ChatContext().append(
         role="system",
         text=(
-            SchedulerAgent().get_system_prompt()
+            scheduler_agent.get_system_prompt()
         ),
     )
 
@@ -48,7 +50,8 @@ async def entrypoint(ctx: JobContext):
         llm=openai.LLM(model="gpt-4o"),
         tts=openai.TTS(),
         chat_ctx=initial_ctx,
-        before_llm_cb=SchedulerAgent().modify_before_llm,
+        before_llm_cb=scheduler_agent.modify_before_llm,
+        fnc_ctx=scheduler_agent,
     )
 
     assistant.start(ctx.room, participant)

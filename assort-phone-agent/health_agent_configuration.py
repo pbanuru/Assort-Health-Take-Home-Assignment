@@ -6,11 +6,16 @@ from livekit.agents import (
     llm,
 )
 from livekit.agents.pipeline import VoicePipelineAgent
+from typing import Annotated
 from colorama import Fore, Style
+
+DEBUG = True
+
 @dataclass
 class PatientInfo:
     # - Collect patient's name and date of birth
-    name: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
     date_of_birth: Optional[datetime] = None
     # - Collect insurance information
     #     - Payer name and ID
@@ -84,9 +89,10 @@ class AvailableProviders:
             }
         )
     ])
-    
-class SchedulerAgent:
+
+class SchedulerAgent(llm.FunctionContext):
     def __init__(self):
+        super().__init__()  # Call the parent class constructor
         self.patient_info = PatientInfo()
         self.available_providers = AvailableProviders()
         
@@ -96,7 +102,8 @@ You are an AI medical appointment scheduler for Assort Health. Your task is to c
 
 1. Greet the patient politely and explain your role.
 2. Collect the following information:
-   - Patient's full name
+   - Patient's first name (Please ask for them to spell it out if it is not clearly heard)
+   - Patient's last name
    - Date of birth
    - Insurance information - payer name and ID
    - Referral status and referring physician (if applicable)
@@ -124,7 +131,7 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
     def get_gathered_info(self):
         return {field: getattr(self.patient_info, field) for field in self.patient_info.__annotations__ if getattr(self.patient_info, field) is not None}
     
-    def modify_before_llm(self, assistant: VoicePipelineAgent, chat_ctx: llm.ChatContext):
+    async def modify_before_llm(self, assistant: VoicePipelineAgent, chat_ctx: llm.ChatContext):
         provider_options = "" if self.patient_info.upcoming_appointment_provider is not None else f"Available providers: {self.available_providers.available_providers}"
         chat_ctx.messages[0].content = f"""
         {self.get_system_prompt()}
@@ -135,13 +142,24 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
         
         {provider_options}
         """
-        return chat_ctx
+        
+        if DEBUG:
+            print(Fore.GREEN + "START CONTEXT" + Style.RESET_ALL)
+            print(chat_ctx.messages[0].content)
+            print(Fore.GREEN + "END CONTEXT" + Style.RESET_ALL)
+        
+    
+    @llm.ai_callable()
+    async def set_first_name(self, first_name: Annotated[str, llm.TypeInfo(description="The first name of the patient")]):
+        """Called when the user provides their first name."""
+        self.patient_info.first_name = first_name
+        if DEBUG:
+            print(Fore.RED + f"First name: {first_name}" + Style.RESET_ALL)
+        return f"Thank you for providing your first name, {first_name}."
 
 if __name__ == "__main__":
     agent = SchedulerAgent()
-    print(agent.get_missing_info())
-    print(agent.get_gathered_info())
-    
+    print(agent.get_missing_info())    
 # Example chatcontext:
 # ctx = llm.ChatContext(messages=[
 #     ChatMessage(

@@ -128,16 +128,17 @@ Important notes:
 - Be patient, professional, and empathetic throughout the conversation.
 - If the patient is unsure about any information, offer to skip it temporarily and return to it later.
 - Use the available provider information to match the patient with an appropriate doctor based on their needs.
+- If the patient does not have a referral, it's ok if the referred physician field is left blank.
 
 Remember to maintain a friendly and helpful demeanor throughout the interaction.
 """
 
     def get_missing_info(self):
-        return [
-            field
+        return {
+            field: getattr(self.patient_info, field)
             for field in self.patient_info.__annotations__
             if getattr(self.patient_info, field) is None
-        ]
+        }
 
     def get_gathered_info(self):
         return {
@@ -253,6 +254,35 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
         if DEBUG:
             print(Fore.RED + f"Insurance ID: {insurance_id}" + Style.RESET_ALL)
         return f"I've recorded your insurance ID as {insurance_id}. Is that correct?"
+
+
+@llm.ai_callable()
+async def set_referral_status(
+    self,
+    has_referral: Annotated[
+        bool, llm.TypeInfo(description="Whether the patient has a referral or not")
+    ],
+):
+    """Called when the user indicates whether they have a referral or not."""
+    self.patient_info.has_referral = has_referral
+    if DEBUG:
+        print(Fore.RED + f"Has referral: {has_referral}" + Style.RESET_ALL)
+    return f"I've noted that you {'have' if has_referral else 'do not have'} a referral. Is that correct?"
+
+
+@llm.ai_callable()
+async def set_referred_physician(
+    self,
+    referred_physician: Annotated[
+        str,
+        llm.TypeInfo(description="The name of the physician who provided the referral"),
+    ],
+):
+    """Called when the user provides the name of the referring physician."""
+    self.patient_info.referred_physician = referred_physician
+    if DEBUG:
+        print(Fore.RED + f"Referred physician: {referred_physician}" + Style.RESET_ALL)
+    return f"I've recorded the referring physician as Dr. {referred_physician}. Is that correct?"
 
 
 if __name__ == "__main__":

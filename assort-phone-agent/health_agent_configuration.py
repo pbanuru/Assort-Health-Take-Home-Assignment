@@ -40,6 +40,7 @@ class PatientInfo:
     upcoming_appointment_time: Optional[datetime] = None
 
     confirmation_email_sent: Optional[bool] = False
+    information_confirmed: Optional[bool] = False  # New flag
 
 
 @dataclass
@@ -392,8 +393,27 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
             return f"Information still needed: {missing_fields}"
 
     @llm.ai_callable()
+    async def confirmation_completed_signal(self):
+        """Called when all the gathered information has been confirmed with the patient near the end of the call."""
+        if not self.patient_info.information_confirmed:
+            self.patient_info.information_confirmed = True
+            if DEBUG:
+                print(
+                    Fore.GREEN
+                    + "Information confirmed with the patient."
+                    + Style.RESET_ALL
+                )
+            return "Information has been confirmed with the patient."
+        else:
+            if DEBUG:
+                print(
+                    Fore.YELLOW + "Information was already confirmed." + Style.RESET_ALL
+                )
+            return "Information was already confirmed."
+
+    @llm.ai_callable()
     async def send_confirmation_email(self):
-        """Send a confirmation email to the patient with their appointment details if an email was provided."""
+        """Send a confirmation email to the patient with their appointment details if an email was provided and information was confirmed."""
         if self.patient_info.email is None:
             if DEBUG:
                 print(
@@ -402,6 +422,15 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
                     + Style.RESET_ALL
                 )
             return "No email address provided. Confirmation email not sent."
+
+        if not self.patient_info.information_confirmed:
+            if DEBUG:
+                print(
+                    Fore.YELLOW
+                    + "Information not confirmed. Skipping confirmation email."
+                    + Style.RESET_ALL
+                )
+            return "Information not confirmed. Confirmation email not sent."
 
         # TODO: Implement the actual email sending logic here
         self.patient_info.confirmation_email_sent = True
@@ -415,7 +444,7 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
 
     @llm.ai_callable()
     async def hang_up(self):
-        """Check if all necessary information has been gathered, that the confirmation email has been sent if applicable, and hang up the call."""
+        """Check if all necessary information has been gathered, confirmed, and that the confirmation email has been sent if applicable, and hang up the call."""
         missing_info = self.get_missing_info()
         missing_info.pop("confirmation_email_sent", None)
         missing_info.pop("email", None)  # Email is now optional
@@ -436,32 +465,39 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
             )
             print(
                 Fore.YELLOW
+                + f"Information confirmed: {self.patient_info.information_confirmed}"
+                + Style.RESET_ALL
+            )
+            print(
+                Fore.YELLOW
                 + f"Confirmation email sent: {self.patient_info.confirmation_email_sent}"
                 + Style.RESET_ALL
             )
 
-        if not missing_info:
+        if not missing_info and self.patient_info.information_confirmed:
             if self.patient_info.email is None:
                 if DEBUG:
                     print(
                         Fore.GREEN
-                        + "Ready to hang up: All information gathered, no email provided"
+                        + "Ready to hang up: All information gathered and confirmed, no email provided"
                         + Style.RESET_ALL
                     )
                 await self.delete_room()
-                return "All necessary information gathered. No email provided. Call concluded and room deleted."
+                return "All necessary information gathered and confirmed. No email provided. Call concluded and room deleted."
             elif not self.patient_info.confirmation_email_sent:
-                return "All necessary information gathered. Confirmation email needs to be sent before concluding the call."
+                return "All necessary information gathered and confirmed. Confirmation email needs to be sent before concluding the call."
             else:
                 if DEBUG:
                     print(
                         Fore.GREEN
-                        + "Ready to hang up: All information gathered and email sent"
+                        + "Ready to hang up: All information gathered, confirmed, and email sent"
                         + Style.RESET_ALL
                     )
                 await self.delete_room()
-                return "All necessary information gathered and confirmation email sent. Call concluded and room deleted."
+                return "All necessary information gathered, confirmed, and confirmation email sent. Call concluded and room deleted."
         else:
+            if not self.patient_info.information_confirmed:
+                return "Unable to conclude call. Information has not been confirmed with the patient."
             missing_fields = ", ".join(missing_info.keys())
             return f"Unable to conclude call. Missing information: {missing_fields}"
 

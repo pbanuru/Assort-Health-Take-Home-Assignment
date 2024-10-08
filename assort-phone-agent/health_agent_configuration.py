@@ -353,9 +353,17 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
 
     @llm.ai_callable()
     async def check_all_info_gathered(self):
-        """Check if all necessary patient information has been gathered."""
+        """Check if all necessary patient information has been gathered (before sending confirmation email)."""
         missing_info = self.get_missing_info()
         missing_info.pop("confirmation_email_sent", None)
+
+        if DEBUG:
+            print(Fore.GREEN + f"Missing info: {missing_info}" + Style.RESET_ALL)
+            print(
+                Fore.GREEN
+                + f"Gathered info: {self.get_gathered_info()}"
+                + Style.RESET_ALL
+            )
 
         if not missing_info:
             return "All necessary information has been gathered. We can proceed with scheduling the appointment."
@@ -398,10 +406,23 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
             tasks_message = " and ".join(incomplete_tasks)
             return f"We are not ready to hang up yet. We still need to {tasks_message}."
 
+    @llm.ai_callable()
+    async def hang_up(self):
+        """Hang up the call after all necessary information has been gathered and processed."""
+        # Check if we're ready to hang up
+        ready_check = await self.check_ready_to_hang_up()
+        if "You can now conclude the call" in ready_check:
+            # TODO: Implement the actual hang-up logic here
+            return "Thank you for your time. Your appointment has been scheduled, and you will receive a confirmation email shortly. Is there anything else I can help you with before we end the call?"
+        else:
+            return (
+                f"I apologize, but we're not ready to end the call yet. {ready_check}"
+            )
+
 
 if __name__ == "__main__":
     agent = SchedulerAgent()
     print(agent.get_missing_info())
     # You can test the new function here if needed
     # import asyncio
-    # print(asyncio.run(agent.check_ready_to_hang_up()))
+    # print(asyncio.run(agent.hang_up()))

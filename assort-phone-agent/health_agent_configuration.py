@@ -507,28 +507,25 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
         if self.patient_info.chief_complaint is None:
             return "I'm sorry, but I need to know your main reason for the visit before I can suggest appropriate providers. Can you please tell me why you're seeking an appointment?"
 
-        suggested_providers = []
+        providers_info = []
         for provider, times, info in self.available_providers.available_providers:
-            if any(
-                keyword in self.patient_info.chief_complaint.lower()
-                for keyword in info["specialty"].lower().split()
-            ):
-                suggested_providers.append((provider, times, info))
+            provider_data = {
+                "name": provider,
+                "specialty": info["specialty"],
+                "background": info["background"],
+                "available_times": [t.strftime("%A, %B %d at %I:%M %p") for t in times],
+            }
+            providers_info.append(provider_data)
 
-        if not suggested_providers:
-            suggested_providers = self.available_providers.available_providers
+        response = f"""Based on the patient's chief complaint: "{self.patient_info.chief_complaint}", 
+        please suggest up to three appropriate providers from the following list:
 
-        response = "Based on your needs, I would recommend the following providers:\n\n"
-        for provider, times, info in suggested_providers[
-            :3
-        ]:  # Limit to top 3 suggestions
-            response += f"- {provider} ({info['specialty']})\n"
-            response += f"  Available times: {', '.join([t.strftime('%Y-%m-%d %H:%M') for t in times])}\n"
-            response += f"  Background: {info['background']}\n\n"
+        {providers_info}
 
-        response += (
-            "Would you like to schedule an appointment with one of these providers?"
-        )
+        For each suggested provider, include their name, specialty, available times, and a brief explanation of why they would be a good fit for the patient's needs.
+        
+        After listing the suggestions, ask the patient if they would like to schedule an appointment with one of these doctors, and if so, to specify which doctor and preferred appointment time."""
+
         return response
 
 

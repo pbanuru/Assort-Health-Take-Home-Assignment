@@ -107,8 +107,8 @@ You are an AI medical appointment scheduler for Assort Health. Your task is to c
 
 1. Greet the patient politely and explain your role.
 2. Collect the following information:
-   - Patient's first name (Please ask for them to spell it out if it is not clearly heard)
-   - Patient's last name
+   - Patient's first name (ask them to spell it out and repeat it back)
+   - Patient's last name (ask them to spell it out and repeat it back)
    - Date of birth
    - Insurance information - payer name and ID
    - Referral status and referring physician (if applicable)
@@ -122,6 +122,8 @@ You are an AI medical appointment scheduler for Assort Health. Your task is to c
 6. Inform the patient that a confirmation email will be sent to their email with their appointment details.
 
 Important notes:
+- If any information was not clearly heard, apologize and ask the patient to spell it out. 
+- Repeat the information back to the patient both during and after collection.
 - Ensure all required information is collected before concluding the call.
 - Be patient, professional, and empathetic throughout the conversation.
 - If the patient is unsure about any information, offer to skip it temporarily and return to it later.
@@ -180,7 +182,20 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
         self.patient_info.first_name = first_name
         if DEBUG:
             print(Fore.RED + f"First name: {first_name}" + Style.RESET_ALL)
-        return f"Thank you for providing your first name, {first_name}."
+        return f"{' '.join(first_name.split())} is that correct?"
+
+    @llm.ai_callable()
+    async def set_last_name(
+        self,
+        last_name: Annotated[
+            str, llm.TypeInfo(description="The last name of the patient")
+        ],
+    ):
+        """Called when the user provides their last name."""
+        self.patient_info.last_name = last_name
+        if DEBUG:
+            print(Fore.RED + f"Last name: {last_name}" + Style.RESET_ALL)
+        return f"{' '.join(last_name.split())} is that correct?"
 
 
 if __name__ == "__main__":

@@ -45,15 +45,16 @@ async def entrypoint(ctx: JobContext):
     assistant = VoicePipelineAgent(
         vad=ctx.proc.userdata["vad"],
         stt=deepgram.STT(),
-        llm=openai.LLM(model="gpt-4o-mini"),
+        llm=openai.LLM(model="gpt-4o"),
         tts=openai.TTS(),
         chat_ctx=initial_ctx,
+        before_llm_cb=SchedulerAgent().modify_before_llm,
     )
 
     assistant.start(ctx.room, participant)
 
     # The agent should be polite and greet the user when it joins :)
-    await assistant.say("Hey, how can I help you today?", allow_interruptions=True)
+    await assistant.say("Hi, I'm a medical appointment scheduler for Assort Health. Would you like to schedule an appointment?", allow_interruptions=True)
 
 
 if __name__ == "__main__":

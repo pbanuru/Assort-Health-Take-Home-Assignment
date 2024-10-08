@@ -2,7 +2,11 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional, List, Tuple, Dict
 from dataclasses import field
-
+from livekit.agents import (
+    llm,
+)
+from livekit.agents.pipeline import VoicePipelineAgent
+from colorama import Fore, Style
 @dataclass
 class PatientInfo:
     # - Collect patient's name and date of birth
@@ -93,12 +97,12 @@ You are an AI medical appointment scheduler for Assort Health. Your task is to c
 1. Greet the patient politely and explain your role.
 2. Collect the following information:
    - Patient's full name
-   - Date of birth (format: YYYY-MM-DD)
-   - Insurance information (payer name and ID)
+   - Date of birth
+   - Insurance information - payer name and ID
    - Referral status and referring physician (if applicable)
    - Chief medical complaint or reason for the visit
    - Address
-   - Contact information (phone number and email)
+   - Contact information - phone number and email
 
 3. Based on the patient's chief complaint, suggest appropriate available providers and appointment times.
 4. Help the patient select a provider and appointment time.
@@ -117,6 +121,62 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
     def get_missing_info(self):
         return [field for field in self.patient_info.__annotations__ if getattr(self.patient_info, field) is None]
     
+    def get_gathered_info(self):
+        return {field: getattr(self.patient_info, field) for field in self.patient_info.__annotations__ if getattr(self.patient_info, field) is not None}
+    
+    def modify_before_llm(self, assistant: VoicePipelineAgent, chat_ctx: llm.ChatContext):
+        provider_options = "" if self.patient_info.upcoming_appointment_provider is not None else f"Available providers: {self.available_providers.available_providers}"
+        chat_ctx.messages[0].content = f"""
+        {self.get_system_prompt()}
+        
+        Missing information: {self.get_missing_info()}
+        
+        Gathered information: {self.get_gathered_info()}
+        
+        {provider_options}
+        """
+        return chat_ctx
+
 if __name__ == "__main__":
     agent = SchedulerAgent()
     print(agent.get_missing_info())
+    print(agent.get_gathered_info())
+    
+# Example chatcontext:
+# ctx = llm.ChatContext(messages=[
+#     ChatMessage(
+#         role='system',
+#         content='You are a medical appointment scheduler for Assort Health.',
+#         id=None, name=None, tool_calls=None, tool_call_id=None, tool_exception=None
+#     ),
+#     ChatMessage(
+#         role='assistant',
+#         content='Hey, how can I help you today?',
+#         id=None, name=None, tool_calls=None, tool_call_id=None, tool_exception=None
+#     ),
+#     ChatMessage(
+#         role='user',
+#         content='Hi. Who are you?',
+#         id=None, name=None, tool_calls=None, tool_call_id=None, tool_exception=None
+#     ),
+#     ChatMessage(
+#         role='assistant',
+#         content="Hello! I'm a medical appointment scheduler for Assort Health. How can I assist you today?",
+#         id=None, name=None, tool_calls=None, tool_call_id=None, tool_exception=None
+#     ),
+#     ChatMessage(
+#         role='user',
+#         content='Wow. So cool. What do you wanna talk about?',
+#         id=None, name=None, tool_calls=None, tool_call_id=None, tool_exception=None
+#     ),
+#     ChatMessage(
+#         role='assistant',
+#         content="Thank you! I'm here to help with anything related to scheduling medical appointments, answering questions about our services, or assisting with any other healthcare-related needs you might have. Let me know how I can assist you!",
+#         id=None, name=None, tool_calls=None, tool_call_id=None, tool_exception=None
+#     ),
+#     ChatMessage(
+#         role='user',
+#         content="That's really amazing.",
+#         id=None, name=None, tool_calls=None, tool_call_id=None, tool_exception=None
+#     )
+# ])

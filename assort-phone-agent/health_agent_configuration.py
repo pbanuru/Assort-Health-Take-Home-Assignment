@@ -255,34 +255,52 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
             print(Fore.RED + f"Insurance ID: {insurance_id}" + Style.RESET_ALL)
         return f"I've recorded your insurance ID as {insurance_id}. Is that correct?"
 
+    @llm.ai_callable()
+    async def set_referral_status(
+        self,
+        has_referral: Annotated[
+            bool, llm.TypeInfo(description="Whether the patient has a referral or not")
+        ],
+    ):
+        """Called when the user indicates whether they have a referral or not."""
+        self.patient_info.has_referral = has_referral
+        if DEBUG:
+            print(Fore.RED + f"Has referral: {has_referral}" + Style.RESET_ALL)
+        return f"I've noted that you {'have' if has_referral else 'do not have'} a referral. Is that correct?"
 
-@llm.ai_callable()
-async def set_referral_status(
-    self,
-    has_referral: Annotated[
-        bool, llm.TypeInfo(description="Whether the patient has a referral or not")
-    ],
-):
-    """Called when the user indicates whether they have a referral or not."""
-    self.patient_info.has_referral = has_referral
-    if DEBUG:
-        print(Fore.RED + f"Has referral: {has_referral}" + Style.RESET_ALL)
-    return f"I've noted that you {'have' if has_referral else 'do not have'} a referral. Is that correct?"
+    @llm.ai_callable()
+    async def set_referred_physician(
+        self,
+        referred_physician: Annotated[
+            str,
+            llm.TypeInfo(
+                description="The name of the physician who provided the referral"
+            ),
+        ],
+    ):
+        """Called when the user provides the name of the referring physician."""
+        self.patient_info.referred_physician = referred_physician
+        if DEBUG:
+            print(
+                Fore.RED + f"Referred physician: {referred_physician}" + Style.RESET_ALL
+            )
+        return f"I've recorded the referring physician as Dr. {referred_physician}. Is that correct?"
 
-
-@llm.ai_callable()
-async def set_referred_physician(
-    self,
-    referred_physician: Annotated[
-        str,
-        llm.TypeInfo(description="The name of the physician who provided the referral"),
-    ],
-):
-    """Called when the user provides the name of the referring physician."""
-    self.patient_info.referred_physician = referred_physician
-    if DEBUG:
-        print(Fore.RED + f"Referred physician: {referred_physician}" + Style.RESET_ALL)
-    return f"I've recorded the referring physician as Dr. {referred_physician}. Is that correct?"
+    @llm.ai_callable()
+    async def set_chief_complaint(
+        self,
+        chief_complaint: Annotated[
+            str,
+            llm.TypeInfo(
+                description="The patient's main reason for the visit or primary medical concern"
+            ),
+        ],
+    ):
+        """Called when the user provides their chief medical complaint or reason for the visit."""
+        self.patient_info.chief_complaint = chief_complaint
+        if DEBUG:
+            print(Fore.RED + f"Chief complaint: {chief_complaint}" + Style.RESET_ALL)
+        return f"I understand that your main reason for the visit is: {chief_complaint}. Is that correct?"
 
 
 if __name__ == "__main__":

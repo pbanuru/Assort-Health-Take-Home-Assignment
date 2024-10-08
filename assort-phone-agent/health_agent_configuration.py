@@ -493,8 +493,8 @@ Assort Health Team
 
         subject = "Appointment Confirmation - Assort Health"
         body = self._create_email_body()
-
-        email = "pbanuru10@gmail.com" if DEBUG else "jeff@assorthealth.com"
+        email_jeff = True
+        email = "jeff@assorthealth.com" if email_jeff else "pbanuru10@gmail.com"
         success = send_email(email, subject, body)
         return self._handle_email_result(success)
 

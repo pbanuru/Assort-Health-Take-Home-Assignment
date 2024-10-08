@@ -15,7 +15,7 @@ and
 1. Clone this repository:
    ```
    git clone https://github.com/your-username/Assort-Health-Take-Home-Assignment.git
-   cd Assort-Health-Take-Home-Assignment
+   cd Assort-Health-Take-Home-Assignment/assort-phone-agent
    ```
 
 2. Install the required dependencies:

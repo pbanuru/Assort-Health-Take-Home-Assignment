@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional, List, Tuple, Dict
+from dataclasses import field
 
 @dataclass
 class PatientInfo:
@@ -26,7 +27,7 @@ class PatientInfo:
 class AvailableProviders:
     # - Offer up best available providers and times
     #     - Using fake data with made up doctors
-    available_providers: Optional[List[Tuple[str, List[datetime], Dict[str, str]]]] = [
+    available_providers: List[Tuple[str, List[datetime], Dict[str, str]]] = field(default_factory=lambda: [
         (
             "Dr. Emily Carter",
             [datetime(2023, 5, 1, 10, 0), datetime(2023, 5, 2, 14, 30)],
@@ -75,27 +76,16 @@ class AvailableProviders:
                 "specialty": "Neurology"
             }
         )
-    ]
+    ])
     
 class SchedulerAgent:
     def __init__(self):
         self.patient_info = PatientInfo()
         self.available_providers = AvailableProviders()
-        self.states = [
-            "greeting",
-            "collect_name",
-            "collect_dob",
-            "collect_insurance",
-            "collect_referral",
-            "collect_complaint",
-            "collect_address",
-            "collect_phone_number",
-            "collect_email",
-            "select_provider",
-            "confirm_appointment",
-            "end"
-        ]
-        self.state = self.states[0]
         
-    def get_next_prompt(self) -> str:
-        pass
+    def get_missing_info(self):
+        return [field for field in self.patient_info.__annotations__ if getattr(self.patient_info, field) is None]
+    
+if __name__ == "__main__":
+    agent = SchedulerAgent()
+    print(agent.get_missing_info())

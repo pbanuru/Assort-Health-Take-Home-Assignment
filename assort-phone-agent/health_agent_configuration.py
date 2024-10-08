@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional, List, Tuple, Dict
+from typing import Optional, List, Dict, Any
 from dataclasses import field
 from livekit.agents import (
     llm,
@@ -48,56 +48,62 @@ class PatientInfo:
 class AvailableProviders:
     # - Offer up best available providers and times
     #     - Using fake data with made up doctors
-    available_providers: List[Tuple[str, List[datetime], Dict[str, str]]] = field(
+    available_providers: List[Dict[str, Any]] = field(
         default_factory=lambda: [
-            (
-                "Dr. Emily Carter",
-                [datetime(2023, 5, 1, 10, 0), datetime(2023, 5, 2, 14, 30)],
-                {
-                    "background": "Board-certified in Internal Medicine with 15 years of experience. Graduated from Harvard Medical School and completed residency at Massachusetts General Hospital. Special interest in preventive medicine and women's health.",
-                    "specialty": "Primary Care",
-                },
-            ),
-            (
-                "Dr. Michael Chen",
-                [datetime(2023, 5, 3, 11, 15), datetime(2023, 5, 4, 9, 0)],
-                {
-                    "background": "Fellowship-trained in Cardiology from Johns Hopkins. Published researcher in heart failure treatments. Expertise in non-invasive cardiac imaging and preventive cardiology. Board member of the American Heart Association.",
-                    "specialty": "Cardiology",
-                },
-            ),
-            (
-                "Dr. Sophia Rodriguez",
-                [datetime(2023, 5, 4, 10, 0), datetime(2023, 5, 5, 14, 30)],
-                {
-                    "background": "Board-certified in Pediatrics with a focus on adolescent medicine. Completed fellowship in Adolescent Medicine at Children's Hospital of Philadelphia. Advocate for mental health awareness in teenagers.",
-                    "specialty": "Pediatrics",
-                },
-            ),
-            (
-                "Dr. James Wilson",
-                [datetime(2023, 5, 2, 11, 30), datetime(2023, 5, 3, 15, 0)],
-                {
-                    "background": "Double board-certified in Internal Medicine and Endocrinology. Specializes in diabetes management and thyroid disorders. Pioneered a telemedicine program for rural diabetes patients. Regular speaker at American Diabetes Association conferences.",
-                    "specialty": "Endocrinology",
-                },
-            ),
-            (
-                "Dr. Aisha Patel",
-                [datetime(2023, 5, 1, 13, 0), datetime(2023, 5, 5, 10, 30)],
-                {
-                    "background": "Board-certified in Family Medicine with additional certification in Sports Medicine. Former team physician for a professional soccer team. Expertise in non-surgical orthopedics and exercise prescription for chronic diseases.",
-                    "specialty": "Family Medicine & Sports Medicine",
-                },
-            ),
-            (
-                "Dr. Robert Nguyen",
-                [datetime(2023, 5, 2, 9, 0), datetime(2023, 5, 4, 14, 0)],
-                {
-                    "background": "Board-certified in Neurology with fellowship training in Movement Disorders. Conducts clinical trials on new treatments for Parkinson's disease. Developed a multidisciplinary approach to treating essential tremor. Fluent in English and Vietnamese.",
-                    "specialty": "Neurology",
-                },
-            ),
+            {
+                "name": "Dr. Emily Carter",
+                "available_times": [
+                    datetime(2023, 5, 1, 10, 0),
+                    datetime(2023, 5, 2, 14, 30),
+                ],
+                "background": "Board-certified in Internal Medicine with 15 years of experience. Graduated from Harvard Medical School and completed residency at Massachusetts General Hospital. Special interest in preventive medicine and women's health.",
+                "specialty": "Primary Care",
+            },
+            {
+                "name": "Dr. Michael Chen",
+                "available_times": [
+                    datetime(2023, 5, 3, 11, 15),
+                    datetime(2023, 5, 4, 9, 0),
+                ],
+                "background": "Fellowship-trained in Cardiology from Johns Hopkins. Published researcher in heart failure treatments. Expertise in non-invasive cardiac imaging and preventive cardiology. Board member of the American Heart Association.",
+                "specialty": "Cardiology",
+            },
+            {
+                "name": "Dr. Sophia Rodriguez",
+                "available_times": [
+                    datetime(2023, 5, 4, 10, 0),
+                    datetime(2023, 5, 5, 14, 30),
+                ],
+                "background": "Board-certified in Pediatrics with a focus on adolescent medicine. Completed fellowship in Adolescent Medicine at Children's Hospital of Philadelphia. Advocate for mental health awareness in teenagers.",
+                "specialty": "Pediatrics",
+            },
+            {
+                "name": "Dr. James Wilson",
+                "available_times": [
+                    datetime(2023, 5, 2, 11, 30),
+                    datetime(2023, 5, 3, 15, 0),
+                ],
+                "background": "Double board-certified in Internal Medicine and Endocrinology. Specializes in diabetes management and thyroid disorders. Pioneered a telemedicine program for rural diabetes patients. Regular speaker at American Diabetes Association conferences.",
+                "specialty": "Endocrinology",
+            },
+            {
+                "name": "Dr. Aisha Patel",
+                "available_times": [
+                    datetime(2023, 5, 1, 13, 0),
+                    datetime(2023, 5, 5, 10, 30),
+                ],
+                "background": "Board-certified in Family Medicine with additional certification in Sports Medicine. Former team physician for a professional soccer team. Expertise in non-surgical orthopedics and exercise prescription for chronic diseases.",
+                "specialty": "Family Medicine & Sports Medicine",
+            },
+            {
+                "name": "Dr. Robert Nguyen",
+                "available_times": [
+                    datetime(2023, 5, 2, 9, 0),
+                    datetime(2023, 5, 4, 14, 0),
+                ],
+                "background": "Board-certified in Neurology with fellowship training in Movement Disorders. Conducts clinical trials on new treatments for Parkinson's disease. Developed a multidisciplinary approach to treating essential tremor. Fluent in English and Vietnamese.",
+                "specialty": "Neurology",
+            },
         ]
     )
 
@@ -129,8 +135,10 @@ You are an AI medical appointment scheduler for Assort Health. Your task is to c
    - Address (collect street address, city, state, and ZIP code separately)
    - Contact information - phone number and email (mention that email is optional but required for receiving a confirmation email)
 
-3. Based on the patient's chief complaint, suggest appropriate available providers and appointment times.
-4. Help the patient select a provider and appointment time. Always mention the provider's name before their other information.
+3. Based on the patient's chief complaint, suggest appropriate available providers and appointment times. 
+    Ex. First I suggest Dr. [Provider Name] who is a [Specialty] with [Background]. They are available on [Available Times]. Dr. [Provider Name] would be a great fit for your needs because [Explanation], 
+    Alternatively, ...
+4. Help the patient select a provider and appointment time. Always mention the provider's name first before any other information about them.
 5. Confirm all collected information with the patient.
 6. If an email was provided, inform the patient that a confirmation email will be sent to their email with their appointment details. If no email was provided, inform them that they won't receive a confirmation email.
 
@@ -601,31 +609,22 @@ Assort Health Team
         if self.patient_info.chief_complaint is None:
             return "Chief complaint not provided. Unable to suggest providers. Please ask the patient for their chief complaint and continue the conversation."
 
-        providers_info = []
-        for provider, times, info in self.available_providers.available_providers:
-            provider_data = {
-                "name": provider,
-                "specialty": info["specialty"],
-                "background": info["background"],
-                "available_times": [t.strftime("%A, %B %d at %I:%M %p") for t in times],
-            }
-            providers_info.append(provider_data)
-
         response = f"""Chief complaint: "{self.patient_info.chief_complaint}"
         Available providers:
 
         """
-        for provider in providers_info:
+        for provider in self.available_providers.available_providers:
             response += f"""
-        Name: {provider['name']}
-        Specialty: {provider['specialty']}
-        Background: {provider['background']}
-        Available times: {', '.join(provider['available_times'])}
+        {provider['name']}:
+        - Specialty: {provider['specialty']}
+        - Background: {provider['background']}
+        - Available times: {', '.join(t.strftime("%A, %B %d at %I:%M %p") for t in provider['available_times'])}
 
         """
 
         response += """
-        Please suggest up to three appropriate providers based on the chief complaint. For each suggested provider, include their name, specialty, available times, and a brief explanation of why they would be a good fit for the patient's needs. If no providers are a good fit, suggest creating a new provider. After suggesting providers, please continue the conversation with the patient to help them choose a provider and appointment time."""
+        Please suggest up to three appropriate providers based on the chief complaint. For each suggested provider, start with their name, then include their specialty, available times, and a brief explanation of why they would be a good fit for the patient's needs. Always mention the provider's name first in your suggestions. If no providers are a good fit, suggest creating a new provider. After suggesting providers, please continue the conversation with the patient to help them choose a provider and appointment time.
+        """
 
         return response
 

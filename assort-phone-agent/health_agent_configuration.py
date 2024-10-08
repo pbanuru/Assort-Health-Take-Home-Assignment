@@ -410,8 +410,8 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
         return f"Confirmation email sent to {self.patient_info.email}"
 
     @llm.ai_callable()
-    async def check_ready_to_hang_up(self):
-        """Check if all necessary information has been gathered and the confirmation email has been sent (if applicable)."""
+    async def hang_up(self):
+        """Check if all necessary information has been gathered, that the confirmation email has been sent if applicable, and hang up the call."""
         missing_info = self.get_missing_info()
         missing_info.pop("confirmation_email_sent", None)
         missing_info.pop("email", None)  # Email is now optional
@@ -422,7 +422,7 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
         if DEBUG:
             print(
                 Fore.YELLOW
-                + f"Ready to hang up check - Missing info: {missing_info}"
+                + f"Hang up check - Missing info: {missing_info}"
                 + Style.RESET_ALL
             )
             print(
@@ -437,37 +437,27 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
             )
 
         if not missing_info:
-            if (
-                self.patient_info.email is None
-                or self.patient_info.confirmation_email_sent
-            ):
+            if self.patient_info.email is None:
                 if DEBUG:
                     print(
                         Fore.GREEN
-                        + "Ready to hang up: All information gathered and email sent (if applicable)"
+                        + "Ready to hang up: All information gathered, no email provided"
                         + Style.RESET_ALL
                     )
-                return "All necessary information gathered and confirmation email sent (if applicable). Ready to conclude the call."
+                return "All necessary information gathered. No email provided. Call concluded."
+            elif not self.patient_info.confirmation_email_sent:
+                return "All necessary information gathered. Confirmation email needs to be sent before concluding the call."
             else:
-                return "All necessary information gathered. Confirmation email needs to be sent."
+                if DEBUG:
+                    print(
+                        Fore.GREEN
+                        + "Ready to hang up: All information gathered and email sent"
+                        + Style.RESET_ALL
+                    )
+                return "All necessary information gathered and confirmation email sent. Call concluded."
         else:
             missing_fields = ", ".join(missing_info.keys())
-            return f"Not ready to conclude call. Missing information: {missing_fields}"
-
-    @llm.ai_callable()
-    async def hang_up(self):
-        """Hang up the call after all necessary information has been gathered and processed."""
-        # Check if we're ready to hang up
-        ready_check = await self.check_ready_to_hang_up()
-        if "Ready to conclude the call" in ready_check:
-            # TODO: Implement the actual hang-up logic here
-            if DEBUG:
-                print(Fore.GREEN + "Hanging up the call" + Style.RESET_ALL)
-            return "Call concluded. Appointment scheduled and confirmation email sent (if applicable)."
-        else:
-            if DEBUG:
-                print(Fore.RED + f"Unable to hang up: {ready_check}" + Style.RESET_ALL)
-            return f"Unable to conclude call: {ready_check}"
+            return f"Unable to conclude call. Missing information: {missing_fields}"
 
     @llm.ai_callable()
     async def set_appointment(

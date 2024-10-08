@@ -131,7 +131,7 @@ Important notes:
 - If the patient is unsure about any information, offer to skip it temporarily and return to it later.
 - Use the available provider information to match the patient with an appropriate doctor based on their needs.
 - If the patient does not have a referral, it's ok if the referred physician field is left blank.
-
+- Before you hang up, make sure to check if all the necessary information has been gathered and the confirmation email has been sent, and if you are ready to hang up.
 Remember to maintain a friendly and helpful demeanor throughout the interaction.
 """
 
@@ -369,6 +369,9 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
         missing_info = self.get_missing_info()
         missing_info.pop("confirmation_email_sent", None)
 
+        if not self.patient_info.has_referral:
+            missing_info.pop("referred_physician", None)
+
         if DEBUG:
             print(Fore.GREEN + f"Missing info: {missing_info}" + Style.RESET_ALL)
             print(
@@ -411,9 +414,10 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
     async def check_ready_to_hang_up(self):
         """Check if all necessary information has been gathered and the confirmation email has been sent."""
         missing_info = self.get_missing_info()
-        missing_info.pop(
-            "confirmation_email_sent", None
-        )  # We don't need to check this field
+        missing_info.pop("confirmation_email_sent", None)
+
+        if not self.patient_info.has_referral:
+            missing_info.pop("referred_physician", None)
 
         if DEBUG:
             print(

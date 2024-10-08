@@ -325,6 +325,30 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
             print(Fore.RED + f"Address: {full_address}" + Style.RESET_ALL)
         return f"I've recorded your address as: {full_address}. Is that correct?"
 
+    @llm.ai_callable()
+    async def set_phone_number(
+        self,
+        phone_number: Annotated[
+            str, llm.TypeInfo(description="The patient's phone number")
+        ],
+    ):
+        """Called when the user provides their phone number."""
+        self.patient_info.phone_number = phone_number
+        if DEBUG:
+            print(Fore.RED + f"Phone number: {phone_number}" + Style.RESET_ALL)
+        return f"I've recorded your phone number as: {phone_number}. Is that correct?"
+
+    @llm.ai_callable()
+    async def set_email(
+        self,
+        email: Annotated[str, llm.TypeInfo(description="The patient's email address")],
+    ):
+        """Called when the user provides their email address."""
+        self.patient_info.email = email
+        if DEBUG:
+            print(Fore.RED + f"Email: {email}" + Style.RESET_ALL)
+        return f"I've recorded your email address as: {email}. Is that correct?"
+
 
 if __name__ == "__main__":
     agent = SchedulerAgent()

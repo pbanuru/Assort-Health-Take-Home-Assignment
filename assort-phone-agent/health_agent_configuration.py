@@ -4,10 +4,13 @@ from typing import Optional, List, Tuple, Dict
 from dataclasses import field
 from livekit.agents import (
     llm,
+    JobContext,
 )
 from livekit.agents.pipeline import VoicePipelineAgent
 from typing import Annotated
 from colorama import Fore, Style
+import os
+from livekit import api
 
 DEBUG = True
 
@@ -98,10 +101,16 @@ class AvailableProviders:
 
 
 class SchedulerAgent(llm.FunctionContext):
-    def __init__(self):
-        super().__init__()  # Call the parent class constructor
+    def __init__(self, job_context: JobContext):
+        super().__init__()
         self.patient_info = PatientInfo()
         self.available_providers = AvailableProviders()
+        self.job_context = job_context
+        self.livekit_client = api.LiveKitAPI(
+            os.getenv("LIVEKIT_URL"),
+            os.getenv("LIVEKIT_API_KEY"),
+            os.getenv("LIVEKIT_API_SECRET"),
+        )
 
     def get_system_prompt(self):
         return """
@@ -152,11 +161,6 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
     async def modify_before_llm(
         self, assistant: VoicePipelineAgent, chat_ctx: llm.ChatContext
     ):
-        provider_options = (
-            ""
-            if self.patient_info.upcoming_appointment_provider is not None
-            else f"Available providers: {self.available_providers.available_providers}"
-        )
         chat_ctx.messages[
             0
         ].content = f"""
@@ -444,7 +448,8 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
                         + "Ready to hang up: All information gathered, no email provided"
                         + Style.RESET_ALL
                     )
-                return "All necessary information gathered. No email provided. Call concluded."
+                await self.delete_room()
+                return "All necessary information gathered. No email provided. Call concluded and room deleted."
             elif not self.patient_info.confirmation_email_sent:
                 return "All necessary information gathered. Confirmation email needs to be sent before concluding the call."
             else:
@@ -454,10 +459,27 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
                         + "Ready to hang up: All information gathered and email sent"
                         + Style.RESET_ALL
                     )
-                return "All necessary information gathered and confirmation email sent. Call concluded."
+                await self.delete_room()
+                return "All necessary information gathered and confirmation email sent. Call concluded and room deleted."
         else:
             missing_fields = ", ".join(missing_info.keys())
             return f"Unable to conclude call. Missing information: {missing_fields}"
+
+    async def delete_room(self):
+        """Delete the LiveKit room after the call is concluded."""
+        try:
+            await self.livekit_client.room.delete_room(
+                api.DeleteRoomRequest(room=self.job_context.room.name)
+            )
+            if DEBUG:
+                print(
+                    Fore.GREEN
+                    + f"Room {self.job_context.room.name} deleted successfully"
+                    + Style.RESET_ALL
+                )
+        except Exception as e:
+            if DEBUG:
+                print(Fore.RED + f"Error deleting room: {str(e)}" + Style.RESET_ALL)
 
     @llm.ai_callable()
     async def set_appointment(

@@ -24,7 +24,7 @@ def prewarm(proc: JobProcess):
 
 
 async def entrypoint(ctx: JobContext):
-    scheduler_agent = SchedulerAgent()
+    scheduler_agent = SchedulerAgent(ctx)
 
     initial_ctx = llm.ChatContext().append(
         role="system",

@@ -165,6 +165,18 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
         
         {provider_options}
         """
+        # Remove the latest system message besides the initial system message
+        for i in range(len(chat_ctx.messages) - 1, 0, -1):
+            if chat_ctx.messages[i].role == "system":
+                del chat_ctx.messages[i]
+                break
+
+        chat_ctx.messages.append(
+            llm.ChatMessage(
+                role="system",
+                content=f"Missing information: {self.get_missing_info()} \n\nGathered information: {self.get_gathered_info()}",
+            )
+        )
 
         if DEBUG:
             print(Fore.GREEN + "START CONTEXT" + Style.RESET_ALL)

@@ -375,10 +375,33 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
         self.patient_info.confirmation_email_sent = True
         return "A confirmation email has been sent to the patient's email address with their appointment details."
 
+    @llm.ai_callable()
+    async def check_ready_to_hang_up(self):
+        """Check if all necessary information has been gathered and the confirmation email has been sent."""
+        missing_info = self.get_missing_info()
+        missing_info.pop(
+            "confirmation_email_sent", None
+        )  # We don't need to check this field
+
+        if not missing_info and self.patient_info.confirmation_email_sent:
+            return "All necessary information has been gathered and the confirmation email has been sent. You can now conclude the call."
+        else:
+            incomplete_tasks = []
+            if missing_info:
+                missing_fields = ", ".join(missing_info.keys())
+                incomplete_tasks.append(
+                    f"gather the following information: {missing_fields}"
+                )
+            if not self.patient_info.confirmation_email_sent:
+                incomplete_tasks.append("send the confirmation email")
+
+            tasks_message = " and ".join(incomplete_tasks)
+            return f"We are not ready to hang up yet. We still need to {tasks_message}."
+
 
 if __name__ == "__main__":
     agent = SchedulerAgent()
     print(agent.get_missing_info())
     # You can test the new function here if needed
     # import asyncio
-    # print(asyncio.run(agent.send_confirmation_email()))
+    # print(asyncio.run(agent.check_ready_to_hang_up()))

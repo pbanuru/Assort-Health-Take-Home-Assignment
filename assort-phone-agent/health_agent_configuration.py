@@ -116,12 +116,12 @@ You are an AI medical appointment scheduler for Assort Health. Your task is to c
    - Referral status and referring physician (if applicable)
    - Reason for the visit (Chief medical complaint) (don't refer to it as the chief complaint cause patient may not know what that is)
    - Address (collect street address, city, state, and ZIP code separately)
-   - Contact information - phone number and email
+   - Contact information - phone number and email (mention that email is optional but required for receiving a confirmation email)
 
 3. Based on the patient's chief complaint, suggest appropriate available providers and appointment times.
 4. Help the patient select a provider and appointment time.
 5. Confirm all collected information with the patient.
-6. Inform the patient that a confirmation email will be sent to their email with their appointment details.
+6. If an email was provided, inform the patient that a confirmation email will be sent to their email with their appointment details. If no email was provided, inform them that they won't receive a confirmation email.
 
 Important notes:
 - If any information was not clearly heard, apologize and ask the patient to spell it out. 
@@ -131,7 +131,7 @@ Important notes:
 - If the patient is unsure about any information, offer to skip it temporarily and return to it later.
 - Use the available provider information to match the patient with an appropriate doctor based on their needs.
 - If the patient does not have a referral, it's ok if the referred physician field is left blank.
-- Before you hang up, make sure to check if all the necessary information has been gathered and the confirmation email has been sent, and if you are ready to hang up.
+- Before you hang up, make sure to check if all the necessary information has been gathered and the confirmation email has been sent (if applicable), and if you are ready to hang up.
 Remember to maintain a friendly and helpful demeanor throughout the interaction.
 """
 
@@ -353,19 +353,22 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
     @llm.ai_callable()
     async def set_email(
         self,
-        email: Annotated[str, llm.TypeInfo(description="The patient's email address")],
+        email: Annotated[
+            str, llm.TypeInfo(description="The patient's email address (optional)")
+        ],
     ):
         """Called when the user provides their email address."""
         self.patient_info.email = email
         if DEBUG:
             print(Fore.RED + f"Email: {email}" + Style.RESET_ALL)
-        return f"I've recorded your email address as: {email}. Is that correct?"
+        return f"I've recorded your email address as: {email}. Is that correct? You will receive a confirmation email with your appointment details at this address."
 
     @llm.ai_callable()
     async def check_all_info_gathered(self):
         """Check if all necessary patient information has been gathered (before sending confirmation email)."""
         missing_info = self.get_missing_info()
         missing_info.pop("confirmation_email_sent", None)
+        missing_info.pop("email", None)  # Email is now optional
 
         if not self.patient_info.has_referral:
             missing_info.pop("referred_physician", None)
@@ -379,7 +382,12 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
             )
 
         if not missing_info:
-            return "All necessary information has been gathered. We can proceed with scheduling the appointment."
+            note = (
+                ""
+                if self.patient_info.email is None
+                else " and a confirmation email will be sent to your email"
+            )
+            return f"All necessary information has been gathered. We can proceed with scheduling the appointment{note}."
         else:
             missing_fields = ", ".join(missing_info.keys())
             return (
@@ -388,15 +396,15 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
 
     @llm.ai_callable()
     async def send_confirmation_email(self):
-        """Send a confirmation email to the patient with their appointment details."""
+        """Send a confirmation email to the patient with their appointment details if an email was provided."""
         if self.patient_info.email is None:
             if DEBUG:
                 print(
-                    Fore.RED
-                    + "Unable to send confirmation email: Email address not available"
+                    Fore.YELLOW
+                    + "No email address provided. Skipping confirmation email."
                     + Style.RESET_ALL
                 )
-            return "Unable to send confirmation email. Patient email address is not available."
+            return "No email address was provided, so a confirmation email will not be sent. The patient has been informed about their appointment details verbally."
 
         # TODO: Implement the actual email sending logic here
         self.patient_info.confirmation_email_sent = True
@@ -410,9 +418,10 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
 
     @llm.ai_callable()
     async def check_ready_to_hang_up(self):
-        """Check if all necessary information has been gathered and the confirmation email has been sent."""
+        """Check if all necessary information has been gathered and the confirmation email has been sent (if applicable)."""
         missing_info = self.get_missing_info()
         missing_info.pop("confirmation_email_sent", None)
+        missing_info.pop("email", None)  # Email is now optional
 
         if not self.patient_info.has_referral:
             missing_info.pop("referred_physician", None)
@@ -425,36 +434,32 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
             )
             print(
                 Fore.YELLOW
+                + f"Email provided: {self.patient_info.email is not None}"
+                + Style.RESET_ALL
+            )
+            print(
+                Fore.YELLOW
                 + f"Confirmation email sent: {self.patient_info.confirmation_email_sent}"
                 + Style.RESET_ALL
             )
 
-        if not missing_info and self.patient_info.confirmation_email_sent:
-            if DEBUG:
-                print(
-                    Fore.GREEN
-                    + "Ready to hang up: All information gathered and email sent"
-                    + Style.RESET_ALL
-                )
-            return "All necessary information has been gathered and the confirmation email has been sent. You can now conclude the call."
+        if not missing_info:
+            if (
+                self.patient_info.email is None
+                or self.patient_info.confirmation_email_sent
+            ):
+                if DEBUG:
+                    print(
+                        Fore.GREEN
+                        + "Ready to hang up: All information gathered and email sent (if applicable)"
+                        + Style.RESET_ALL
+                    )
+                return "All necessary information has been gathered and the confirmation email has been sent (if applicable). You can now conclude the call."
+            else:
+                return "All necessary information has been gathered, but we still need to send the confirmation email."
         else:
-            incomplete_tasks = []
-            if missing_info:
-                missing_fields = ", ".join(missing_info.keys())
-                incomplete_tasks.append(
-                    f"gather the following information: {missing_fields}"
-                )
-            if not self.patient_info.confirmation_email_sent:
-                incomplete_tasks.append("send the confirmation email")
-
-            tasks_message = " and ".join(incomplete_tasks)
-            if DEBUG:
-                print(
-                    Fore.RED
-                    + f"Not ready to hang up: {tasks_message}"
-                    + Style.RESET_ALL
-                )
-            return f"We are not ready to hang up yet. We still need to {tasks_message}."
+            missing_fields = ", ".join(missing_info.keys())
+            return f"We are not ready to hang up yet. We still need to gather the following information: {missing_fields}."
 
     @llm.ai_callable()
     async def hang_up(self):

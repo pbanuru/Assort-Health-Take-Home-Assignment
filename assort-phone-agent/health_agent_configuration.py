@@ -22,7 +22,10 @@ class PatientInfo:
     # - Collect contact information: phone number and optionally email
     phone_number: Optional[str] = None
     email: Optional[str] = None
-
+    # - Offer up best available providers and times
+    upcoming_appointment_provider: Optional[str] = None
+    upcoming_appointment_time: Optional[datetime] = None
+    
 @dataclass
 class AvailableProviders:
     # - Offer up best available providers and times

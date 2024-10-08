@@ -302,6 +302,17 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
             print(Fore.RED + f"Chief complaint: {chief_complaint}" + Style.RESET_ALL)
         return f"I understand that your main reason for the visit is: {chief_complaint}. Is that correct?"
 
+    @llm.ai_callable()
+    async def set_address(
+        self,
+        address: Annotated[str, llm.TypeInfo(description="The patient's full address")],
+    ):
+        """Called when the user provides their address."""
+        self.patient_info.address = address
+        if DEBUG:
+            print(Fore.RED + f"Address: {address}" + Style.RESET_ALL)
+        return f"I've recorded your address as: {address}. Is that correct?"
+
 
 if __name__ == "__main__":
     agent = SchedulerAgent()

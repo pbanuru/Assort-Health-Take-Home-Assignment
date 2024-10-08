@@ -25,12 +25,10 @@ def prewarm(proc: JobProcess):
 
 async def entrypoint(ctx: JobContext):
     scheduler_agent = SchedulerAgent()
-    
+
     initial_ctx = llm.ChatContext().append(
         role="system",
-        text=(
-            scheduler_agent.get_system_prompt()
-        ),
+        text=(scheduler_agent.get_system_prompt()),
     )
 
     logger.info(f"connecting to room {ctx.room.name}")
@@ -57,7 +55,10 @@ async def entrypoint(ctx: JobContext):
     assistant.start(ctx.room, participant)
 
     # The agent should be polite and greet the user when it joins :)
-    await assistant.say("Hi, I'm a medical appointment scheduler for Assort Health. Would you like to schedule an appointment?", allow_interruptions=True)
+    await assistant.say(
+        "Hi, I'm a medical appointment scheduler for Assort Health. Would you like to schedule an appointment?",
+        allow_interruptions=True,
+    )
 
 
 if __name__ == "__main__":

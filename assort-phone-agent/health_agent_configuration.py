@@ -11,6 +11,7 @@ from typing import Annotated
 from colorama import Fore, Style
 import os
 from livekit import api
+from send_email import send_email
 
 DEBUG = True
 
@@ -396,7 +397,7 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
 
     @llm.ai_callable()
     async def confirmation_completed_signal(self):
-        """Called when all the gathered information has been confirmed with the patient near the end of the call."""
+        """Called when all the gathered information has been confirmed with the patient near the end of the call. Needs to be called before sending a confirmation email."""
         if not self.patient_info.information_confirmed:
             self.patient_info.information_confirmed = True
             if DEBUG:
@@ -415,9 +416,8 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
                 "Information was already confirmed. Please continue the conversation."
             )
 
-    @llm.ai_callable()
-    async def send_confirmation_email(self):
-        """Send a confirmation email to the patient with their appointment details if an email was provided and information was confirmed."""
+    def _can_send_email(self):
+        """Check if email can be sent."""
         if self.patient_info.email is None:
             if DEBUG:
                 print(
@@ -425,7 +425,7 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
                     + "No email address provided. Skipping confirmation email."
                     + Style.RESET_ALL
                 )
-            return "No email address provided. Confirmation email not sent. Please continue the conversation."
+            return False, "No email address provided. Confirmation email not sent."
 
         if not self.patient_info.information_confirmed:
             if DEBUG:
@@ -434,17 +434,61 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
                     + "Information not confirmed. Skipping confirmation email."
                     + Style.RESET_ALL
                 )
-            return "Information not confirmed. Confirmation email not sent. Please continue the conversation."
+            return False, "Information not confirmed. Confirmation email not sent."
 
-        # TODO: Implement the actual email sending logic here
-        self.patient_info.confirmation_email_sent = True
-        if DEBUG:
-            print(
-                Fore.GREEN
-                + f"Confirmation email sent to: {self.patient_info.email}"
-                + Style.RESET_ALL
-            )
-        return f"Confirmation email sent to {self.patient_info.email}. Please continue the conversation."
+        return True, ""
+
+    def _create_email_body(self):
+        """Create the email body."""
+        return f"""
+Dear {self.patient_info.first_name} {self.patient_info.last_name},
+
+Thank you for scheduling an appointment with Assort Health. Your appointment details are as follows:
+
+Provider: {self.patient_info.upcoming_appointment_provider}
+Date and Time: {self.patient_info.upcoming_appointment_time.strftime('%A, %B %d, %Y at %I:%M %p')}
+
+Please arrive 15 minutes before your scheduled appointment time. If you need to reschedule or have any questions, please call our office.
+
+We look forward to seeing you soon.
+
+Best regards,
+Assort Health Team
+        """
+
+    def _handle_email_result(self, success):
+        """Handle the result of sending the email."""
+        if success:
+            self.patient_info.confirmation_email_sent = True
+            if DEBUG:
+                print(
+                    Fore.GREEN
+                    + f"Confirmation email sent to: {self.patient_info.email}"
+                    + Style.RESET_ALL
+                )
+            return f"Confirmation email sent to {self.patient_info.email}. Please inform the patient and continue the conversation."
+        else:
+            if DEBUG:
+                print(
+                    Fore.RED
+                    + f"Failed to send confirmation email to: {self.patient_info.email}"
+                    + Style.RESET_ALL
+                )
+            return f"Failed to send confirmation email to {self.patient_info.email}. Please inform the patient and continue the conversation."
+
+    @llm.ai_callable()
+    async def send_confirmation_email(self):
+        """Send a confirmation email to the patient with their appointment details. Needs to be called AFTER confirmation_completed_signal."""
+        can_send, message = self._can_send_email()
+        if not can_send:
+            return message + " Please continue the conversation."
+
+        subject = "Appointment Confirmation - Assort Health"
+        body = self._create_email_body()
+
+        email = "pbanuru10@gmail.com" if DEBUG else "jeff@assorthealth.com"
+        success = send_email(email, subject, body)
+        return self._handle_email_result(success)
 
     @llm.ai_callable()
     async def hang_up(self):

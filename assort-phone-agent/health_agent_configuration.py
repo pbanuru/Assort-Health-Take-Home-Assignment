@@ -76,3 +76,26 @@ class AvailableProviders:
             }
         )
     ]
+    
+class SchedulerAgent:
+    def __init__(self):
+        self.patient_info = PatientInfo()
+        self.available_providers = AvailableProviders()
+        self.states = [
+            "greeting",
+            "collect_name",
+            "collect_dob",
+            "collect_insurance",
+            "collect_referral",
+            "collect_complaint",
+            "collect_address",
+            "collect_phone_number",
+            "collect_email",
+            "select_provider",
+            "confirm_appointment",
+            "end"
+        ]
+        self.state = self.states[0]
+        
+    def get_next_prompt(self) -> str:
+        pass

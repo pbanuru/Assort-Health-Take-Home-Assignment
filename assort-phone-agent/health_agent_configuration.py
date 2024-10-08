@@ -112,7 +112,7 @@ You are an AI medical appointment scheduler for Assort Health. Your task is to c
    - Date of birth
    - Insurance information - payer name and ID
    - Referral status and referring physician (if applicable)
-   - Chief medical complaint or reason for the visit
+   - Reason for the visit (Chief medical complaint)
    - Address
    - Contact information - phone number and email
 
@@ -208,6 +208,24 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
         if DEBUG:
             print(Fore.RED + f"Last name: {last_name}" + Style.RESET_ALL)
         return f"{' '.join(last_name.split())} is that correct?"
+
+    @llm.ai_callable()
+    async def set_date_of_birth(
+        self,
+        date_of_birth: Annotated[
+            str, llm.TypeInfo(description="The patient's date of birth (YYYY-MM-DD)")
+        ],
+    ):
+        """Called when the user provides their date of birth."""
+        try:
+            self.patient_info.date_of_birth = datetime.strptime(
+                date_of_birth, "%Y-%m-%d"
+            )
+            if DEBUG:
+                print(Fore.RED + f"Date of birth: {date_of_birth}" + Style.RESET_ALL)
+            return f"{date_of_birth} is that correct?"
+        except ValueError:
+            return "I'm sorry, that doesn't seem to be a valid date format. Please provide your date of birth in YYYY-MM-DD format."
 
 
 if __name__ == "__main__":

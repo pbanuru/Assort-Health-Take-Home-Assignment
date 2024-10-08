@@ -419,6 +419,66 @@ Remember to maintain a friendly and helpful demeanor throughout the interaction.
                 f"I apologize, but we're not ready to end the call yet. {ready_check}"
             )
 
+    @llm.ai_callable()
+    async def set_appointment(
+        self,
+        provider: Annotated[
+            str,
+            llm.TypeInfo(description="The name of the selected healthcare provider"),
+        ],
+        appointment_time: Annotated[
+            str,
+            llm.TypeInfo(
+                description="The selected appointment time (YYYY-MM-DD HH:MM)"
+            ),
+        ],
+    ):
+        """Called when the user selects a provider and appointment time."""
+        self.patient_info.upcoming_appointment_provider = provider
+        try:
+            self.patient_info.upcoming_appointment_time = datetime.strptime(
+                appointment_time, "%Y-%m-%d %H:%M"
+            )
+            if DEBUG:
+                print(
+                    Fore.RED
+                    + f"Appointment set with {provider} at {appointment_time}"
+                    + Style.RESET_ALL
+                )
+            return f"I've scheduled your appointment with {provider} on {appointment_time}. Is that correct?"
+        except ValueError:
+            return "I'm sorry, that doesn't seem to be a valid date and time format. Please provide the appointment time in YYYY-MM-DD HH:MM format."
+
+    @llm.ai_callable()
+    async def suggest_providers(self):
+        """Suggest appropriate providers based on the patient's chief complaint."""
+        if self.patient_info.chief_complaint is None:
+            return "I'm sorry, but I need to know your main reason for the visit before I can suggest appropriate providers. Can you please tell me why you're seeking an appointment?"
+
+        suggested_providers = []
+        for provider, times, info in self.available_providers.available_providers:
+            if any(
+                keyword in self.patient_info.chief_complaint.lower()
+                for keyword in info["specialty"].lower().split()
+            ):
+                suggested_providers.append((provider, times, info))
+
+        if not suggested_providers:
+            suggested_providers = self.available_providers.available_providers
+
+        response = "Based on your needs, I would recommend the following providers:\n\n"
+        for provider, times, info in suggested_providers[
+            :3
+        ]:  # Limit to top 3 suggestions
+            response += f"- {provider} ({info['specialty']})\n"
+            response += f"  Available times: {', '.join([t.strftime('%Y-%m-%d %H:%M') for t in times])}\n"
+            response += f"  Background: {info['background']}\n\n"
+
+        response += (
+            "Would you like to schedule an appointment with one of these providers?"
+        )
+        return response
+
 
 if __name__ == "__main__":
     agent = SchedulerAgent()
